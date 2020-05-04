@@ -1,0 +1,44 @@
+language: shell
+os: linux
+
+notifications:
+  email:
+    on_success: never
+    on_failure: always
+  slack:
+    secure: hTQk4ZYbrD4eDnwJsrIhDyuw4WfVMkpP0w26AecHS6edQEFkS1LJS77elFQDgg4SlL8K0xdHrTwqMl5JL9LV+2TZ77xUpX0pB7H9toG1rEqxv4v7bKH7umHCvy0YLzfoz5IjcAHkVqX6/MKcp0M1DQ0Ts1TuTzk5IPacekIbCTRXDdqljKIhvGgDfXZWh0dYkSbA9xoPzeN9GXzSSa+uXqQWk7q2uCdXh4stWFOTR8ZJIHqTyUq1+tNTLAM8b3pw/F0uevCKoHIWljqpwLgg/Chu2JuGnOOV91Jwks7nXikgByiRH8ygE2J0HFjBdNCZZU1BffuYqgziZrVDpFjUJkrp5Tku+SCd76O0NmLz5PgBo6BJL0/p3Sa1N2/b4cdrUFbU0W9DVDVLMinTAOlRbhq/iuldAlBLJVTgOpKsbAQ5AqmceGsVk/JYTK8WzCw0Y0LFNiWlVWtUYSQZo887UEozSl415OEtM0kkiosOUxyd305m/HWBzS7pyHSGp6kum3SIwVLjYsHSAx5WRVA38Gg5OOmKwLHDy5RaN+1u0AN66TUGs4GSfzJNjL0+C6I66EMGCRXMerJNMf9r9dnVKsKUNwvaheCZe9IszGxubmlBrPxLLpczplkGrYTv0aRQsgMWTSGLttEek3j3p7p+ntDNWDaveDCdppipM5EjJ4M=
+    template:
+      - "Repo %{repository_slug} *%{result}* build (<%{build_url}|#%{build_number}>) for commit (<%{compare_url}|%{commit}>)"
+      - "%{author}: _%{commit_message}_"
+      - "Execution time: *%{duration}*"
+      - "Message: *%{message}*"
+    on_success: always
+
+services:
+  - docker
+
+env:
+  - DOCKER_COMPOSE_VERSION=1.25.0
+
+before_install:
+  - ./.travis/main.sh
+
+install:
+  - git clone https://github.com/litespeedtech/lsws-docker-env.git
+  - docker-compose up -d
+
+before_script:
+  - docker image ls
+  - sleep 10
+
+script:  
+  - ./.travis/verify.sh
+
+after_script:
+  - docker-compose stop
+  - docker-compose rm -f
+
+
+
+
+
