@@ -2,7 +2,7 @@
 DEFAULT_VH_ROOT='/var/www/vhosts'
 VH_DOC_ROOT=''
 VHNAME=''
-APP_NAME=''
+APP=''
 DOMAIN=''
 WWW_UID=''
 WWW_GID=''
@@ -265,7 +265,7 @@ main(){
 	set_vh_docroot ${DOMAIN}
 	get_owner
 	cd ${VH_DOC_ROOT}
-	if [ "${APP_NAME}" = 'wordpress' ] || [ "${APP_NAME}" = 'wp' ]; then
+	if [ "${APP}" = 'wordpress' ] || [ "${APP}" = 'W' ]; then
 		check_sql_native
 		app_wordpress_dl
 		preinstall_wordpress
@@ -274,8 +274,17 @@ main(){
 		set_lscache
 		change_owner
 		exit 0
+	elif [ "${APP}" = 'magento' ] || [ "${APP}" = 'M' ]; then	
+		check_sql_native
+		app_wordpress_dl
+		preinstall_wordpress
+		install_wp_plugin
+		set_htaccess
+		set_lscache
+		change_owner
+		exit 0	
 	else
-		echo "APP: ${APP_NAME} not support, exit!"
+		echo "APP: ${APP} not support, exit!"
 		exit 1	
 	fi
 }
@@ -288,7 +297,7 @@ while [ ! -z "${1}" ]; do
 			;;
 		-[aA] | -app | --app) shift
 			check_input "${1}"
-			APP_NAME="${1}"
+			APP="${1}"
 			;;
 		-[dD] | -domain | --domain) shift
 			check_input "${1}"

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 source .env
-APP_NAME='wordpress'
+APP='wordpress'
 CONT_NAME='litespeed'
 DOC_FD=''
+EPACE='        '
 
 echow(){
     FLAG=${1}
@@ -12,9 +13,17 @@ echow(){
 
 help_message(){
     case ${1} in
-        "1")    
+        "1")   
             echow "Script will get 'DOMAIN' and 'database' info from .env file, then auto setup virtual host and the wordpress site for you."
-            exit 0
+            echo -e "\033[1mOPTIONS\033[0m"
+            echow '-W, --wordpress'
+            echo "${EPACE}${EPACE}Example: lsws1clk.sh -W. If no input, script will still install wordpress by default"
+            echow '-M, --magento'
+            echo "${EPACE}${EPACE}Example: lsws1clk.sh -M"
+            echow '-M, --magento -S, --sample'
+            echo "${EPACE}${EPACE}Example: lsws1clk.sh -M -S, to install sample data"
+            echow '-H, --help'
+            echo "${EPACE}${EPACE}Display help and exit." 
         ;;
         "2")
             echow 'Service finished, enjoy your accelarated LiteSpeed server!'
@@ -72,6 +81,7 @@ EOT
 
 app_download(){
     docker-compose exec ${CONT_NAME} su -c "appinstallctl.sh --app ${1} --domain ${2}"
+    docker-compose exec ${CONT_NAME} su -c "install_magentoctl.sh --app ${1} --domain ${2}"
 }
 
 lsws_restart(){
@@ -83,7 +93,7 @@ main(){
     gen_root_fd ${DOMAIN}
     create_db ${DOMAIN}
     store_credential
-    app_download ${APP_NAME} ${DOMAIN}
+    app_download ${APP} ${DOMAIN}
     lsws_restart
     help_message 2
 }
@@ -92,6 +102,12 @@ while [ ! -z "${1}" ]; do
     case ${1} in
         -[hH] | -help | --help)
             help_message 1
+            ;;
+        -[wW] | --wordpress)
+            APP='wordpress'
+            ;;
+        -[mM] | --magento)
+            APP='magento'
             ;;
         *) 
             help_message 1
