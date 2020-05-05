@@ -1,4 +1,6 @@
 #!/bin/bash
+### Author: Cold Egg & Lars Hagen
+
 DEFAULT_VH_ROOT='/var/www/vhosts'
 VH_DOC_ROOT=''
 VHNAME=''
@@ -6,13 +8,38 @@ APP=''
 DOMAIN=''
 WWW_UID=''
 WWW_GID=''
+USER='1000'
 WP_CONST_CONF=''
-PUB_IP=$(curl -s http://checkip.amazonaws.com)
 DB_HOST='mysql'
 PLUGINLIST="litespeed-cache.zip"
 THEME='twentytwenty'
+LSDIR='/usr/local/lsws'
+PHP_MEMORY='777'
+MA_COMPOSER='/usr/local/bin/composer'
+MA_VER='2.3.4'
+EMAIL='test@example.com'
+APP_ACCT='admin123'
+APP_PASS='password456'
+MA_BACK_URL='admin_123'
+SKIP_WP=0
+app_skip=0
+SAMPLE='false'
+DB_NAME='wordpress'
+DB_USER='wordpress'
+DB_PASSWORD='password'
+DB_HOST='mysql'
 EPACE='        '
 
+echoY() {
+    echo -e "\033[38;5;148m${1}\033[39m"
+}
+echoG() {
+    echo -e "\033[38;5;71m${1}\033[39m"
+}
+echoR()
+{
+    echo -e "\033[38;5;203m${1}\033[39m"
+}
 echow(){
     FLAG=${1}
     shift
@@ -65,6 +92,19 @@ get_owner(){
 		WWW_GID=1000
 		echo "Set owner to ${WWW_UID}"
 	fi
+}
+
+install_composer(){
+    if [ -e ${MA_COMPOSER} ]; then
+        echoG 'Composer already installed'
+    else
+        curl -sS https://getcomposer.org/installer | php
+        mv composer.phar ${MA_COMPOSER}
+        composer --version
+        if [ ${?} != 0 ]; then
+            echoR 'Issue with composer, Please check!'
+        fi        
+    fi    
 }
 
 get_db_pass(){
@@ -121,7 +161,7 @@ install_wp_plugin(){
     rm -f ${VH_DOC_ROOT}/wp-content/plugins/*.zip
 }
 
-set_htaccess(){
+config_wp_htaccess(){
     if [ ! -f ${VH_DOC_ROOT}/.htaccess ]; then 
         touch ${VH_DOC_ROOT}/.htaccess
     fi   
@@ -230,7 +270,6 @@ preinstall_wordpress(){
 		linechange 'DB_USER' ${VH_DOC_ROOT}/wp-config.php "${NEWDBPWD}"
 		NEWDBPWD="define('DB_NAME', '${SQL_DB}');"
 		linechange 'DB_NAME' ${VH_DOC_ROOT}/wp-config.php "${NEWDBPWD}"
-        #NEWDBPWD="define('DB_HOST', '${PUB_IP}');"
 		NEWDBPWD="define('DB_HOST', '${DB_HOST}');"
 		linechange 'DB_HOST' ${VH_DOC_ROOT}/wp-config.php "${NEWDBPWD}"
 	elif [ -f ${VH_DOC_ROOT}/wp-config.php ]; then
@@ -253,6 +292,107 @@ app_wordpress_dl(){
 	fi
 }
 
+clean_magento_cache(){
+    cd ${VH_DOC_ROOT}
+    php bin/magento cache:flush >/dev/null 2>&1
+    php bin/magento cache:clean >/dev/null 2>&1
+}
+
+config_ma_htaccess(){
+    echoG 'Setting Magento htaccess'
+    if [ ! -f ${VH_DOC_ROOT}/.htaccess ]; then
+        echoR "${VH_DOC_ROOT}/.htaccess not exist, skip"
+    else
+        sed -i '1i\<IfModule LiteSpeed>LiteMage on</IfModule>\' ${VH_DOC_ROOT}/.htaccess
+    fi
+}
+
+install_litemage(){
+    echoG '[Start] Install LiteMage'
+    echo -ne '\n' | composer require litespeed/module-litemage
+    su ${USER} -c "php bin/magento deploy:mode:set developer; \
+        php bin/magento module:enable Litespeed_Litemage; \
+        php bin/magento setup:upgrade; \
+        php bin/magento setup:di:compile; \
+        php bin/magento deploy:mode:set production;"
+    echoG '[End] LiteMage install'
+    clean_magento_cache
+}
+
+config_litemage(){
+    bin/magento config:set --scope=default --scope-code=0 system/full_page_cache/caching_application LITEMAGE
+}
+
+app_magento_dl(){
+	rm -f ${MA_VER}.tar.gz
+	wget -q --no-check-certificate https://github.com/magento/magento2/archive/${MA_VER}.tar.gz
+	if [ ${?} != 0 ]; then
+		echoR "Download ${MA_VER}.tar.gz failed, abort!"
+		exit 1
+	fi
+	tar -zxf ${MA_VER}.tar.gz
+	mv magento2-${MA_VER}/* ${VH_DOC_ROOT}
+	mv magento2-${MA_VER}/.editorconfig ${VH_DOC_ROOT}
+	mv magento2-${MA_VER}/.htaccess ${VH_DOC_ROOT}
+	mv magento2-${MA_VER}/.php_cs.dist ${VH_DOC_ROOT}
+	mv magento2-${MA_VER}/.user.ini ${VH_DOC_ROOT}
+	rm -rf ${MA_VER}.tar.gz magento2-${MA_VER}		
+}
+
+install_magento(){
+	if [ ${app_skip} = 0 ]; then
+		echoG 'Run Composer install'
+		echo -ne '\n' | composer install
+		echoG 'Composer install finished'
+		if [ ! -e ${VH_DOC_ROOT}/vendor/autoload.php ]; then
+			echoR "/vendor/autoload.php not found, need to check"
+			sleep 10
+			ls ${VH_DOC_ROOT}/vendor/
+		fi    
+		echoG 'Install Magento...'
+		./bin/magento setup:install \
+			--db-name=${DB_NAME} \
+			--db-user=${DB_USER} \
+			--db-password=${DB_PASSWORD} \
+			--db-host=${DB_HOST} \
+			--admin-user=${APP_ACCT} \
+			--admin-password=${APP_PASS} \
+			--admin-email=${EMAIL} \
+			--admin-firstname=test \
+			--admin-lastname=account \
+			--language=en_US \
+			--currency=USD \
+			--timezone=America/Chicago \
+			--use-rewrites=1 \
+			--backend-frontname=${MA_BACK_URL}
+		if [ ${?} = 0 ]; then
+			echoG 'Magento install finished'
+		else
+			echoR 'Not working properly!'    
+		fi 
+		change_owner ${VH_DOC_ROOT}
+	fi
+}
+
+install_ma_sample(){
+    if [ "${SAMPLE}" = 'true' ]; then
+        echoG 'Start installing Magento 2 sample data'
+        git clone https://github.com/magento/magento2-sample-data.git
+        cd magento2-sample-data
+        git checkout ${MA_VER}
+        php -f dev/tools/build-sample-data.php -- --ce-source="${VH_DOC_ROOT}"
+        echoG 'Update permission'
+        change_owner ${VH_DOC_ROOT}; cd ${VH_DOC_ROOT}
+        find . -type d -exec chmod g+ws {} +
+        rm -rf var/cache/* var/page_cache/* var/generation/*
+        echoG 'Upgrade'
+        su ${USER} -c 'php bin/magento setup:upgrade'
+        echoG 'Deploy static content'
+        su ${USER} -c 'php bin/magento setup:static-content:deploy'
+        echoG 'End installing Magento 2 sample data'
+    fi
+}
+
 change_owner(){
 		if [ "${VHNAME}" != '' ]; then
 		    chown -R ${WWW_UID}:${WWW_GID} ${DEFAULT_VH_ROOT}/${VHNAME} 
@@ -270,17 +410,17 @@ main(){
 		app_wordpress_dl
 		preinstall_wordpress
 		install_wp_plugin
-		set_htaccess
+		config_htaccess
 		set_lscache
 		change_owner
 		exit 0
 	elif [ "${APP}" = 'magento' ] || [ "${APP}" = 'M' ]; then	
-		check_sql_native
-		app_wordpress_dl
-		preinstall_wordpress
-		install_wp_plugin
-		set_htaccess
-		set_lscache
+		install_composer
+		app_magento_dl
+		install_magento
+		install_litemage
+		config_ma_htaccess
+        config_litemage
 		change_owner
 		exit 0	
 	else
