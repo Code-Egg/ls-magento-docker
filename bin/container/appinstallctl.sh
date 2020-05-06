@@ -19,15 +19,11 @@ MA_COMPOSER='/usr/local/bin/composer'
 MA_VER='2.3.4'
 EMAIL='test@example.com'
 APP_ACCT='admin123'
-APP_PASS='password456'
+APP_PASS=''
 MA_BACK_URL='admin_123'
 SKIP_WP=0
 app_skip=0
 SAMPLE='false'
-DB_NAME='wordpress'
-DB_USER='wordpress'
-DB_PASSWORD='password'
-DB_HOST='mysql'
 EPACE='        '
 
 echoY() {
@@ -50,6 +46,10 @@ help_message(){
 	echo -e "\033[1mOPTIONS\033[0m"
     echow '-A, -app [wordpress] -D, --domain [DOMAIN_NAME]'
     echo "${EPACE}${EPACE}Example: appinstallctl.sh --app wordpress --domain example.com"
+	echow '-M, --magento'
+	echo "${EPACE}${EPACE}Example: appinstallctl.sh --app magento --domain example.com"
+	echow '-M, --magento -S, --sample'
+	echo "${EPACE}${EPACE}Example: appinstallctl.sh --app magento --domain example.com --sample"	
     echow '-H, --help'
     echo "${EPACE}${EPACE}Display help and exit."
     exit 0
@@ -82,6 +82,10 @@ ck_unzip(){
         echo "Install unzip package.."
         apt-get install unzip -y > /dev/null 2>&1
     fi		
+}
+
+gen_user_pwd(){
+    APP_PASS=$(openssl rand -hex 16)
 }
 
 get_owner(){
@@ -351,9 +355,9 @@ install_magento(){
 		fi    
 		echoG 'Install Magento...'
 		./bin/magento setup:install \
-			--db-name=${DB_NAME} \
-			--db-user=${DB_USER} \
-			--db-password=${DB_PASSWORD} \
+			--db-name=${SQL_DB} \
+			--db-user=${SQL_USER} \
+			--db-password=${SQL_PASS} \
 			--db-host=${DB_HOST} \
 			--admin-user=${APP_ACCT} \
 			--admin-password=${APP_PASS} \
@@ -401,16 +405,23 @@ change_owner(){
 		fi
 }
 
+show_access(){
+	echo "Account: ${APP_ACCT}"
+	echo "Account: ${APP_PASS}"
+	echo "Admin_URL: ${MA_BACK_URL}"
+}
+
 main(){
 	set_vh_docroot ${DOMAIN}
 	get_owner
+	gen_user_pwd
 	cd ${VH_DOC_ROOT}
 	if [ "${APP}" = 'wordpress' ] || [ "${APP}" = 'W' ]; then
 		check_sql_native
 		app_wordpress_dl
 		preinstall_wordpress
 		install_wp_plugin
-		config_htaccess
+		config_wp_htaccess
 		set_lscache
 		change_owner
 		exit 0
@@ -421,7 +432,9 @@ main(){
 		install_litemage
 		config_ma_htaccess
         config_litemage
+		install_ma_sample
 		change_owner
+		show_access
 		exit 0	
 	else
 		echo "APP: ${APP} not support, exit!"
@@ -445,7 +458,10 @@ while [ ! -z "${1}" ]; do
 			;;
 		-vhname | --vhname) shift
 			VHNAME="${1}"
-			;;	       
+			;;
+		-[sS] | --sample)
+            SAMPLE='true'
+            ;;			      
 		*) 
 			help_message
 			;;              
