@@ -1,5 +1,4 @@
 #!/bin/bash
-### Author: Cold Egg & Lars Hagen
 
 DEFAULT_VH_ROOT='/var/www/vhosts'
 VH_DOC_ROOT=''
