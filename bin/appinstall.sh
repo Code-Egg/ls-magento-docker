@@ -2,6 +2,7 @@
 APP_NAME=''
 DOMAIN=''
 EPACE='        '
+SAMPLE=''
 
 echow(){
     FLAG=${1}
@@ -28,13 +29,13 @@ check_input(){
 }
 
 app_download(){
-    docker-compose exec litespeed su -c "appinstallctl.sh --app ${1} --domain ${2}"
+    docker-compose exec litespeed su -c "appinstallctl.sh --app ${1} --domain ${2} ${3}"
     bash bin/webadmin.sh -r
     exit 0
 }
 
 main(){
-    app_download ${APP_NAME} ${DOMAIN}
+    app_download "${APP_NAME}" "${DOMAIN}" "${SAMPLE}"
 }
 
 check_input ${1}
@@ -50,7 +51,10 @@ while [ ! -z "${1}" ]; do
         -[dD] | -domain | --domain) shift
             check_input "${1}"
             DOMAIN="${1}"
-            ;;          
+            ;;
+		-[sS] | --sample)
+            SAMPLE='-S'
+            ;;                
         *) 
             help_message
             ;;              

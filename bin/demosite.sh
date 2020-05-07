@@ -4,6 +4,7 @@ APP='wordpress'
 CONT_NAME='litespeed'
 DOC_FD=''
 EPACE='        '
+SAMPLE=''
 
 echow(){
     FLAG=${1}
@@ -80,7 +81,7 @@ EOT
 }
 
 app_download(){
-    docker-compose exec ${CONT_NAME} su -c "appinstallctl.sh --app ${1} --domain ${2}"
+    docker-compose exec ${CONT_NAME} su -c "appinstallctl.sh --app ${1} --domain ${2} ${3}"
 }
 
 lsws_restart(){
@@ -92,7 +93,7 @@ main(){
     gen_root_fd ${DOMAIN}
     create_db ${DOMAIN}
     store_credential
-    app_download ${APP} ${DOMAIN}
+    app_download ${APP} ${DOMAIN} ${SAMPLE}
     lsws_restart
     help_message 2
 }
@@ -108,6 +109,9 @@ while [ ! -z "${1}" ]; do
         -[mM] | --magento)
             APP='magento'
             ;;
+		-[sS] | --sample)
+            SAMPLE='-S'
+            ;;            
         *) 
             help_message 1
             ;;              
