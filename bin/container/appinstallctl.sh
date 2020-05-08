@@ -2,7 +2,6 @@
 
 DEFAULT_VH_ROOT='/var/www/vhosts'
 VH_DOC_ROOT=''
-VHNAME=''
 APP=''
 DOMAIN=''
 WWW_UID=''
@@ -17,9 +16,9 @@ PHP_MEMORY='777'
 MA_COMPOSER='/usr/local/bin/composer'
 MA_VER='2.3.4'
 EMAIL='test@example.com'
-APP_ACCT='admin123'
+APP_ACCT=''
 APP_PASS=''
-MA_BACK_URL='admin_123'
+MA_BACK_URL=''
 SKIP_WP=0
 app_skip=0
 SAMPLE='false'
@@ -43,11 +42,9 @@ echow(){
 
 help_message(){
 	echo -e "\033[1mOPTIONS\033[0m"
-    echow '-A, -app [wordpress] -D, --domain [DOMAIN_NAME]'
+    echow '-A, -app [wordpress|magento] -D, --domain [DOMAIN_NAME]'
     echo "${EPACE}${EPACE}Example: appinstallctl.sh --app wordpress --domain example.com"
-	echow '-M, --magento'
-	echo "${EPACE}${EPACE}Example: appinstallctl.sh --app magento --domain example.com"
-	echow '-M, --magento -S, --sample'
+	echow '-A, -app [wordpress|magento] -D, --domain [DOMAIN_NAME] -S, --sample'
 	echo "${EPACE}${EPACE}Example: appinstallctl.sh --app magento --domain example.com --sample"	
     echow '-H, --help'
     echo "${EPACE}${EPACE}Display help and exit."
@@ -83,8 +80,11 @@ ck_unzip(){
     fi		
 }
 
-gen_user_pwd(){
+gen_pass(){
+	APP_STR=$(shuf -i 100-999 -n1)
     APP_PASS=$(openssl rand -hex 16)
+	APP_ACCT="admin${APP_STR}"
+	MA_BACK_URL="admin_${APP_STR}"
 }
 
 get_owner(){
@@ -110,6 +110,14 @@ install_composer(){
     fi    
 }
 
+install_git(){
+	if [ ! -e /usr/bin/git ]; then
+		echoG 'Install git'
+		apt-get update >/dev/null 2>&1
+		apt-get install git -y >/dev/null 2>&1
+    fi
+}
+
 get_db_pass(){
 	if [ -f ${DEFAULT_VH_ROOT}/${1}/.db_pass ]; then
 		SQL_DB=$(grep -i Database ${VH_ROOT}/.db_pass | awk -F ':' '{print $2}' | tr -d '"')
@@ -121,11 +129,7 @@ get_db_pass(){
 }
 
 set_vh_docroot(){
-	if [ "${VHNAME}" != '' ]; then
-	    VH_ROOT="${DEFAULT_VH_ROOT}/${VHNAME}"
-	    VH_DOC_ROOT="${DEFAULT_VH_ROOT}/${VHNAME}/html"
-		WP_CONST_CONF="${VH_DOC_ROOT}/wp-content/plugins/litespeed-cache/data/const.default.ini"
-	elif [ -d ${DEFAULT_VH_ROOT}/${1}/html ]; then
+    if [ -d ${DEFAULT_VH_ROOT}/${1}/html ]; then
 	    VH_ROOT="${DEFAULT_VH_ROOT}/${1}"
         VH_DOC_ROOT="${DEFAULT_VH_ROOT}/${1}/html"
 		WP_CONST_CONF="${VH_DOC_ROOT}/wp-content/plugins/litespeed-cache/data/const.default.ini"
@@ -260,11 +264,7 @@ END
 }
 
 preinstall_wordpress(){
-	if [ "${VHNAME}" != '' ]; then
-	    get_db_pass ${VHNAME}
-	else
-		get_db_pass ${DOMAIN}
-	fi	
+	get_db_pass ${DOMAIN}
 	if [ ! -f ${VH_DOC_ROOT}/wp-config.php ] && [ -f ${VH_DOC_ROOT}/wp-config-sample.php ]; then
 		cp ${VH_DOC_ROOT}/wp-config-sample.php ${VH_DOC_ROOT}/wp-config.php
 		NEWDBPWD="define('DB_PASSWORD', '${SQL_PASS}');"
@@ -351,7 +351,8 @@ install_magento(){
 			echoR "/vendor/autoload.php not found, need to check"
 			sleep 10
 			ls ${VH_DOC_ROOT}/vendor/
-		fi    
+		fi
+		get_db_pass ${DOMAIN}
 		echoG 'Install Magento...'
 		./bin/magento setup:install \
 			--db-name=${SQL_DB} \
@@ -397,23 +398,19 @@ install_ma_sample(){
 }
 
 change_owner(){
-		if [ "${VHNAME}" != '' ]; then
-		    chown -R ${WWW_UID}:${WWW_GID} ${DEFAULT_VH_ROOT}/${VHNAME} 
-		else
-		    chown -R ${WWW_UID}:${WWW_GID} ${DEFAULT_VH_ROOT}/${DOMAIN}
-		fi
+	    chown -R ${WWW_UID}:${WWW_GID} ${DEFAULT_VH_ROOT}/${DOMAIN}
 }
 
 show_access(){
 	echo "Account: ${APP_ACCT}"
-	echo "Account: ${APP_PASS}"
+	echo "Password: ${APP_PASS}"
 	echo "Admin_URL: ${MA_BACK_URL}"
 }
 
 main(){
 	set_vh_docroot ${DOMAIN}
 	get_owner
-	gen_user_pwd
+	gen_pass
 	cd ${VH_DOC_ROOT}
 	if [ "${APP}" = 'wordpress' ] || [ "${APP}" = 'W' ]; then
 		check_sql_native
@@ -426,6 +423,7 @@ main(){
 		exit 0
 	elif [ "${APP}" = 'magento' ] || [ "${APP}" = 'M' ]; then	
 		install_composer
+		install_git
 		app_magento_dl
 		install_magento
 		install_litemage
@@ -454,9 +452,6 @@ while [ ! -z "${1}" ]; do
 		-[dD] | -domain | --domain) shift
 			check_input "${1}"
 			DOMAIN="${1}"
-			;;
-		-vhname | --vhname) shift
-			VHNAME="${1}"
 			;;
 		-[sS] | --sample)
             SAMPLE='true'

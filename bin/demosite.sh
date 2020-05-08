@@ -25,6 +25,7 @@ help_message(){
             echo "${EPACE}${EPACE}Example: lsws1clk.sh -M -S, to install sample data"
             echow '-H, --help'
             echo "${EPACE}${EPACE}Display help and exit." 
+            exit 0
         ;;
         "2")
             echow 'Service finished, enjoy your accelarated LiteSpeed server!'
