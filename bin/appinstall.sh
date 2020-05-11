@@ -41,7 +41,7 @@ phpMemoryRevert(){
 
 app_download(){
     phpMemorySet
-    docker-compose exec litespeed su -c "appinstallctl.sh --app ${1} --domain ${2} ${3}"
+    docker-compose exec --user 1000:1000 litespeed su -c "appinstallctl.sh --app ${1} --domain ${2} ${3}"
     phpMemoryRevert
     bash bin/webadmin.sh -r
     exit 0
