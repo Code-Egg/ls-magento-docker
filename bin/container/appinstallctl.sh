@@ -313,11 +313,11 @@ config_ma_htaccess(){
 install_litemage(){
     echoG '[Start] Install LiteMage'
     echo -ne '\n' | composer require litespeed/module-litemage
-    su ${USER} -c "php bin/magento deploy:mode:set developer; \
-        php bin/magento module:enable Litespeed_Litemage; \
-        php bin/magento setup:upgrade; \
-        php bin/magento setup:di:compile; \
-        php bin/magento deploy:mode:set production;"
+    bin/magento deploy:mode:set developer; 
+    bin/magento module:enable Litespeed_Litemage; 
+    bin/magento setup:upgrade;
+    bin/magento setup:di:compile; 
+    bin/magento deploy:mode:set production;
     echoG '[End] LiteMage install'
     clean_magento_cache
 }
@@ -375,6 +375,9 @@ install_magento(){
 			echoR 'Not working properly!'    
 		fi 
 		change_owner ${VH_DOC_ROOT}
+		echo "Set owner to ${VH_DOC_ROOT}"
+		echo "Set owner to ${WWW_UID}"
+		echo "Set owner to ${WWW_GID}"
 	fi
 }
 
