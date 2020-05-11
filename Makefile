@@ -4,3 +4,8 @@ build_container:
 	
 say_hello:
 	echo "Hello World"
+
+prune:
+	docker-compose kill
+	sudo rm -rf data
+	sudo rm -rf sites/localhost/html/*
