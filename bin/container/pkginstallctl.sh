@@ -55,6 +55,14 @@ install_composer(){
     fi    
 }
 
+install_git(){
+	if [ ! -e /usr/bin/git ]; then
+		echoG 'Install git'
+		apt-get update >/dev/null 2>&1
+		apt-get install git -y >/dev/null 2>&1
+    fi
+}
+
 case ${1} in 
     -[pP] | -package | --package) shift
         if [ -z "${1}" ]; then
@@ -70,6 +78,9 @@ case ${1} in
             composer)
                 install_composer
             ;;
+            git)
+                install_git
+            ;;    
         esac    
     ;;
     -[hH] | -help | --help)

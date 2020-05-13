@@ -105,11 +105,9 @@ check_composer(){
     fi    
 }
 
-install_git(){
+check_git(){
 	if [ ! -e /usr/bin/git ]; then
-		echoG 'Install git'
-		apt-get update >/dev/null 2>&1
-		apt-get install git -y >/dev/null 2>&1
+		echoG 'git package not exist, please check!'
     fi
 }
 
@@ -421,7 +419,7 @@ main(){
 		exit 0
 	elif [ "${APP}" = 'magento' ] || [ "${APP}" = 'M' ]; then	
 		check_composer
-		install_git
+		check_git
 		app_magento_dl
 		install_magento
 		install_litemage
