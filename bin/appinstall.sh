@@ -28,16 +28,21 @@ check_input(){
     fi
 }
 
-phpMemorySet(){
-    PHP_INI=$(docker-compose exec litespeed su -c "php -i | grep 'Loaded Configuration File' | cut -d' ' -f5 " | tr -d '\r')
-    PHP_MEMORY=$(docker-compose exec litespeed su -c "cat $PHP_INI | grep memory_limit" | tr -d '\r')
-    docker-compose exec litespeed su -c "sed -i 's/^memory_limit.*/memory_limit = 512M/g' $PHP_INI"
-    echo PHP_INI $PHP_INI
-    echo PHP_MEMORY $PHP_MEMORY
+set_phpmemory(){
+    if [ "${1}" = 'magento' ]; then 
+        PHP_INI=$(docker-compose exec litespeed su -c "php -i | grep 'Loaded Configuration File' | cut -d' ' -f5 " | tr -d '\r')
+        PHP_MEMORY=$(docker-compose exec litespeed su -c "cat $PHP_INI | grep memory_limit" | tr -d '\r')
+        docker-compose exec litespeed su -c "sed -i 's/^memory_limit.*/memory_limit = 512M/g' $PHP_INI"
+        echo PHP_INI $PHP_INI
+        echo PHP_MEMORY $PHP_MEMORY
+    fi    
 }
-phpMemoryRevert(){
-    docker-compose exec litespeed /bin/bash -c "sed -i 's/^memory_limit.*/$PHP_MEMORY/g' $PHP_INI"
-}    
+
+revert_phpmemory(){
+    if [ "${1}" = 'magento' ]; then 
+        docker-compose exec litespeed /bin/bash -c "sed -i 's/^memory_limit.*/$PHP_MEMORY/g' $PHP_INI"
+    fi    
+}   
 
 
 install_packages(){
@@ -47,10 +52,10 @@ install_packages(){
 }
 
 app_download(){
-    phpMemorySet
+    set_phpmemory ${1}
     install_packages ${1}
     docker-compose exec --user 1000:1000 litespeed bash -c "appinstallctl.sh --app ${1} --domain ${2} ${3}"
-    phpMemoryRevert
+    revert_phpmemory ${1}
     bash bin/webadmin.sh -r
     exit 0
 }

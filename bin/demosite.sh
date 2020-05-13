@@ -68,6 +68,22 @@ create_db(){
     fi    
 }    
 
+set_phpmemory(){
+    if [ "${1}" = 'magento' ]; then 
+        PHP_INI=$(docker-compose exec litespeed su -c "php -i | grep 'Loaded Configuration File' | cut -d' ' -f5 " | tr -d '\r')
+        PHP_MEMORY=$(docker-compose exec litespeed su -c "cat $PHP_INI | grep memory_limit" | tr -d '\r')
+        docker-compose exec litespeed su -c "sed -i 's/^memory_limit.*/memory_limit = 512M/g' $PHP_INI"
+        echo PHP_INI $PHP_INI
+        echo PHP_MEMORY $PHP_MEMORY
+    fi    
+}
+
+revert_phpmemory(){
+    if [ "${1}" = 'magento' ]; then 
+        docker-compose exec litespeed /bin/bash -c "sed -i 's/^memory_limit.*/$PHP_MEMORY/g' $PHP_INI"
+    fi    
+}    
+
 store_credential(){
     if [ -f ${DOC_FD}/.db_pass ]; then
         echo '[O] db file exist!'
@@ -81,7 +97,14 @@ EOT
     fi
 }
 
+install_packages(){
+    if [ "${1}" = 'magento' ]; then
+        docker-compose exec litespeed /bin/bash -c "pkginstallctl.sh --package composer"
+    fi    
+}
+
 app_download(){
+    install_packages ${1}
     docker-compose exec --user 1000:1000 ${CONT_NAME} bash -c "appinstallctl.sh --app ${1} --domain ${2} ${3}"
 }
 
@@ -94,7 +117,9 @@ main(){
     gen_root_fd ${DOMAIN}
     create_db ${DOMAIN}
     store_credential
+    set_phpmemory ${APP}
     app_download ${APP} ${DOMAIN} ${SAMPLE}
+    revert_phpmemory ${APP}
     lsws_restart
     help_message 2
 }
