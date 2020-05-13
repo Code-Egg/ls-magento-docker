@@ -97,16 +97,11 @@ get_owner(){
 	fi
 }
 
-install_composer(){
+check_composer(){
     if [ -e ${MA_COMPOSER} ]; then
         echoG 'Composer already installed'
     else
-        curl -sS https://getcomposer.org/installer | php
-        mv composer.phar ${MA_COMPOSER}
-        composer --version
-        if [ ${?} != 0 ]; then
-            echoR 'Issue with composer, Please check!'
-        fi        
+        echoR 'Issue with composer, Please check!'    
     fi    
 }
 
@@ -425,7 +420,7 @@ main(){
 		change_owner
 		exit 0
 	elif [ "${APP}" = 'magento' ] || [ "${APP}" = 'M' ]; then	
-		install_composer
+		check_composer
 		install_git
 		app_magento_dl
 		install_magento

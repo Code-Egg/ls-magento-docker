@@ -39,8 +39,16 @@ phpMemoryRevert(){
     docker-compose exec litespeed /bin/bash -c "sed -i 's/^memory_limit.*/$PHP_MEMORY/g' $PHP_INI"
 }    
 
+
+install_packages(){
+    if [ "${1}" = 'magento' ]; then
+        docker-compose exec litespeed /bin/bash -c "pkginstallctl.sh --package composer"
+    fi    
+}
+
 app_download(){
     phpMemorySet
+    install_packages ${1}
     docker-compose exec --user 1000:1000 litespeed bash -c "appinstallctl.sh --app ${1} --domain ${2} ${3}"
     phpMemoryRevert
     bash bin/webadmin.sh -r
