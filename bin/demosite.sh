@@ -98,7 +98,10 @@ EOT
 }
 
 install_packages(){
-    if [ "${1}" = 'magento' ]; then
+    if [ "${1}" = 'wordpress' ]; then
+        docker-compose exec litespeed /bin/bash -c "pkginstallctl.sh --package ed"
+        docker-compose exec litespeed /bin/bash -c "pkginstallctl.sh --package unzip"  
+    elif [ "${1}" = 'magento' ]; then
         docker-compose exec litespeed /bin/bash -c "pkginstallctl.sh --package composer"
     fi    
 }

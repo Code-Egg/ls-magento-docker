@@ -27,6 +27,20 @@ help_message(){
     exit 0
 }
 
+install_ed(){
+    if [ ! -f /bin/ed ]; then
+        echo "Install ed package.."
+        apt-get install ed -y > /dev/null 2>&1
+    fi    
+}
+
+install_unzip(){
+    if [ ! -f /usr/bin/unzip ]; then 
+        echo "Install unzip package.."
+        apt-get install unzip -y > /dev/null 2>&1
+    fi		
+}
+
 install_composer(){
     if [ -e ${MA_COMPOSER} ]; then
         echoG 'Composer already installed'
@@ -46,9 +60,17 @@ case ${1} in
         if [ -z "${1}" ]; then
             help_message
         fi
-        if [ "${1}" = 'composer' ]; then
-            install_composer
-        fi    
+        case ${1} in 
+            ed)
+                install_ed
+            ;;    
+            unzip)
+                install_unzip
+            ;;
+            composer)
+                install_composer
+            ;;
+        esac    
     ;;
     -[hH] | -help | --help)
         help_message

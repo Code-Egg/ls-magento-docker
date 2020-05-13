@@ -68,15 +68,15 @@ linechange(){
 
 ck_ed(){
     if [ ! -f /bin/ed ]; then
-        echo "Install ed package.."
-        apt-get install ed -y > /dev/null 2>&1
+        echo 'ed package not exist, please check!'
+		exit 1
     fi    
 }
 
 ck_unzip(){
     if [ ! -f /usr/bin/unzip ]; then 
-        echo "Install unzip package.."
-        apt-get install unzip -y > /dev/null 2>&1
+        echo 'unzip package not exist, please check!'
+		exit 1
     fi		
 }
 
