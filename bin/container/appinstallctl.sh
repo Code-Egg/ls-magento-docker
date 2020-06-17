@@ -362,6 +362,10 @@ install_magento(){
 			--timezone=America/Chicago \
 			--use-rewrites=1 \
 			--backend-frontname=${MA_BACK_URL}
+		
+		# TODO: Make below domains dynamic
+		./bin/magento config:set web/unsecure/base_url http://localhost/ 
+		./bin/magento config:set web/secure/base_url https://localhost/
 		if [ ${?} = 0 ]; then
 			echoG 'Magento install finished'
 		else
@@ -386,9 +390,9 @@ install_ma_sample(){
         find . -type d -exec chmod g+ws {} +
         rm -rf var/cache/* var/page_cache/* var/generation/*
         echoG 'Upgrade'
-        su ${USER} -c 'php bin/magento setup:upgrade'
+    	php bin/magento setup:upgrade
         echoG 'Deploy static content'
-        su ${USER} -c 'php bin/magento setup:static-content:deploy'
+        php bin/magento setup:static-content:deploy
         echoG 'End installing Magento 2 sample data'
     fi
 }
