@@ -363,9 +363,8 @@ install_magento(){
 			--use-rewrites=1 \
 			--backend-frontname=${MA_BACK_URL}
 		
-		# TODO: Make below domains dynamic
-		./bin/magento config:set web/unsecure/base_url http://localhost/ 
-		./bin/magento config:set web/secure/base_url https://localhost/
+		./bin/magento config:set web/unsecure/base_url http://${DOMAIN}/ 
+		./bin/magento config:set web/secure/base_url https://${DOMAIN}/
 		if [ ${?} = 0 ]; then
 			echoG 'Magento install finished'
 		else
