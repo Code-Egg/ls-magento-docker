@@ -111,6 +111,14 @@ check_git(){
     fi
 }
 
+prevent_php(){
+    GETPHPVER=$(php -v | head -n 1 | cut -d " " -f 2 | cut -f1-2 -d".")
+    if [ "${GETPHPVER}" = '7.4' ]; then
+	    echoR 'Detect non-support PHP version, abort!'
+		exit 1
+	fi	
+}
+
 get_db_pass(){
 	if [ -f ${DEFAULT_VH_ROOT}/${1}/.db_pass ]; then
 		SQL_DB=$(grep -i Database ${VH_ROOT}/.db_pass | awk -F ':' '{print $2}' | tr -d '"')
@@ -420,7 +428,8 @@ main(){
 		set_lscache
 		change_owner
 		exit 0
-	elif [ "${APP}" = 'magento' ] || [ "${APP}" = 'M' ]; then	
+	elif [ "${APP}" = 'magento' ] || [ "${APP}" = 'M' ]; then
+	    prevent_php
 		check_composer
 		check_git
 		app_magento_dl
