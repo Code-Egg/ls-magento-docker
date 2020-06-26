@@ -111,6 +111,15 @@ check_git(){
     fi
 }
 
+check_memory(){
+	M_SIZE=$(grep -E 'MemTotal.*kB' /proc/meminfo | awk '{print $2}')
+    if [ "${M_SIZE}" -le "1000000" ]; then
+	    echoY 'We recommend you to install Magento CMS with Memory size larger than 1GB server!'
+		echoY 'To exit installation process, press Ctrl+C, or it will comtinue the installation after 5s.'
+		sleep 5
+	fi
+}
+
 prevent_php(){
     GETPHPVER=$(php -v | head -n 1 | cut -d " " -f 2 | cut -f1-2 -d".")
     if [ "${GETPHPVER}" = '7.4' ]; then
@@ -731,7 +740,7 @@ install_ma_sample(){
         find . -type d -exec chmod g+ws {} +
         rm -rf var/cache/* var/page_cache/* var/generation/*
         echoG 'Upgrade'
-    	php bin/magento setup:upgrade
+    	php bin/magento setup:upgrade >/dev/null
         echoG 'Deploy static content'
         php bin/magento setup:static-content:deploy
         echoG 'End installing Magento 2 sample data'
@@ -764,6 +773,7 @@ main(){
 		exit 0
 	elif [ "${APP}" = 'magento' ] || [ "${APP}" = 'M' ]; then
 	    prevent_php
+		check_memory
 		check_composer
 		check_git
 		app_magento_dl
