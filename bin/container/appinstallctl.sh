@@ -671,19 +671,24 @@ config_litemage(){
 }
 
 app_magento_dl(){
-	rm -f ${MA_VER}.tar.gz
-	wget -q --no-check-certificate https://github.com/magento/magento2/archive/${MA_VER}.tar.gz
-	if [ ${?} != 0 ]; then
-		echoR "Download ${MA_VER}.tar.gz failed, abort!"
+    if [ ! -f "${VH_DOC_ROOT}/app/functions.php" ]; then
+		rm -f ${MA_VER}.tar.gz
+		wget -q --no-check-certificate https://github.com/magento/magento2/archive/${MA_VER}.tar.gz
+		if [ ${?} != 0 ]; then
+			echoR "Download ${MA_VER}.tar.gz failed, abort!"
+			exit 1
+		fi
+		tar -zxf ${MA_VER}.tar.gz
+		mv magento2-${MA_VER}/* ${VH_DOC_ROOT}
+		mv magento2-${MA_VER}/.editorconfig ${VH_DOC_ROOT}
+		mv magento2-${MA_VER}/.htaccess ${VH_DOC_ROOT}
+		mv magento2-${MA_VER}/.php_cs.dist ${VH_DOC_ROOT}
+		mv magento2-${MA_VER}/.user.ini ${VH_DOC_ROOT}
+		rm -rf ${MA_VER}.tar.gz magento2-${MA_VER}	
+	else
+	    echo 'Magento file exist, please manually clean up the document root folder, abort!'
 		exit 1
-	fi
-	tar -zxf ${MA_VER}.tar.gz
-	mv magento2-${MA_VER}/* ${VH_DOC_ROOT}
-	mv magento2-${MA_VER}/.editorconfig ${VH_DOC_ROOT}
-	mv magento2-${MA_VER}/.htaccess ${VH_DOC_ROOT}
-	mv magento2-${MA_VER}/.php_cs.dist ${VH_DOC_ROOT}
-	mv magento2-${MA_VER}/.user.ini ${VH_DOC_ROOT}
-	rm -rf ${MA_VER}.tar.gz magento2-${MA_VER}		
+	fi		
 }
 
 install_magento(){
