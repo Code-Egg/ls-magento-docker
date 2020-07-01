@@ -125,7 +125,6 @@ main(){
     app_download ${APP} ${DOMAIN} ${SAMPLE}
     revert_phpmemory ${APP}
     lsws_restart
-    help_message 2
 }
 
 while [ ! -z "${1}" ]; do

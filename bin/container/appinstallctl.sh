@@ -41,19 +41,26 @@ echow(){
 }
 
 help_message(){
-	echo -e "\033[1mOPTIONS\033[0m"
-    echow '-A, -app [wordpress|magento] -D, --domain [DOMAIN_NAME]'
-    echo "${EPACE}${EPACE}Example: appinstallctl.sh --app wordpress --domain example.com"
-	echow '-A, -app [wordpress|magento] -D, --domain [DOMAIN_NAME] -S, --sample'
-	echo "${EPACE}${EPACE}Example: appinstallctl.sh --app magento --domain example.com --sample"	
-    echow '-H, --help'
-    echo "${EPACE}${EPACE}Display help and exit."
-    exit 0
+    case ${1} in
+        "1")   	
+			echo -e "\033[1mOPTIONS\033[0m"
+			echow '-A, -app [wordpress|magento] -D, --domain [DOMAIN_NAME]'
+			echo "${EPACE}${EPACE}Example: appinstallctl.sh --app wordpress --domain example.com"
+			echow '-A, -app [wordpress|magento] -D, --domain [DOMAIN_NAME] -S, --sample'
+			echo "${EPACE}${EPACE}Example: appinstallctl.sh --app magento --domain example.com --sample"	
+			echow '-H, --help'
+			echo "${EPACE}${EPACE}Display help and exit."
+			exit 0
+        ;;
+        "2")
+            echow 'Service finished, enjoy your accelarated LiteSpeed server!'
+        ;;
+    esac  
 }
 
 check_input(){
     if [ -z "${1}" ]; then
-        help_message
+        help_message 1
         exit 1
     fi
 }
@@ -629,12 +636,12 @@ preinstall_wordpress(){
 }
 
 app_wordpress_dl(){
-	if [ ! -f "${VH_DOC_ROOT}/wp-config.php" ] && [ ! -f "${VH_DOC_ROOT}/wp-config-sample.php" ]; then
+	if [ ! -f "${VH_DOC_ROOT}/wp-config.php" ] && [ ! -f "${VH_DOC_ROOT}/index.php" ]; then
 		wp core download \
 			--allow-root \
 			--quiet
 	else
-	    echo 'wordpress already exist, abort!'
+	    echoR 'wordpress or other file already exist, please manually clean up the document root folder, abort!'
 		exit 1
 	fi
 }
@@ -671,7 +678,7 @@ config_litemage(){
 }
 
 app_magento_dl(){
-    if [ ! -f "${VH_DOC_ROOT}/app/functions.php" ]; then
+    if [ ! -f "${VH_DOC_ROOT}/app/functions.php" ] && [ ! -f "${VH_DOC_ROOT}/index.php" ]; then
 		rm -f ${MA_VER}.tar.gz
 		wget -q --no-check-certificate https://github.com/magento/magento2/archive/${MA_VER}.tar.gz
 		if [ ${?} != 0 ]; then
@@ -686,7 +693,7 @@ app_magento_dl(){
 		mv magento2-${MA_VER}/.user.ini ${VH_DOC_ROOT}
 		rm -rf ${MA_VER}.tar.gz magento2-${MA_VER}	
 	else
-	    echo 'Magento file exist, please manually clean up the document root folder, abort!'
+	    echoR 'Magento file or other file exist, please manually clean up the document root folder, abort!'
 		exit 1
 	fi		
 }
@@ -757,9 +764,11 @@ change_owner(){
 }
 
 show_access(){
-	echo "Account: ${APP_ACCT}"
-	echo "Password: ${APP_PASS}"
-	echo "Admin_URL: ${MA_BACK_URL}"
+	echoG '----------------------------------------'
+	echoY "Account: ${APP_ACCT}"
+	echoY "Password: ${APP_PASS}"
+	echoY "Admin_URL: ${MA_BACK_URL}"
+	echoG '----------------------------------------'
 }
 
 main(){
@@ -794,13 +803,14 @@ main(){
 		echo "APP: ${APP} not support, exit!"
 		exit 1	
 	fi
+	help_message 2
 }
 
 check_input ${1}
 while [ ! -z "${1}" ]; do
 	case ${1} in
 		-[hH] | -help | --help)
-			help_message
+			help_message 1
 			;;
 		-[aA] | -app | --app) shift
 			check_input "${1}"
@@ -814,7 +824,7 @@ while [ ! -z "${1}" ]; do
             SAMPLE='true'
             ;;			      
 		*) 
-			help_message
+			help_message 1
 			;;              
 	esac
 	shift
