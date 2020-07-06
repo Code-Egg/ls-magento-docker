@@ -15,6 +15,18 @@ reinstall:
 	docker-compose rm -f
 	sudo rm -rf data
 	sudo rm -rf sites/localhost/html/*
+	sudo rm -rf lsws/*
+	docker-compose up -d
+	sleep 6
+	./bin/database.sh -D localhost
+	./bin/appinstall.sh -A magento -D localhost
+	
+reinstall_sample:
+	docker-compose kill
+	docker-compose rm -f
+	sudo rm -rf data
+	sudo rm -rf sites/localhost/html/*
+	sudo rm -rf lsws/*
 	docker-compose up -d
 	sleep 6
 	./bin/database.sh -D localhost
