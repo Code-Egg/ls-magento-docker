@@ -58,8 +58,7 @@ install_packages(){
 app_download(){
     set_phpmemory ${1}
     install_packages ${1}
-    # TODO: make the UID and GID below dynamic 
-    docker-compose exec --user 1000:1000 litespeed bash -c "appinstallctl.sh --app ${1} --domain ${2} ${3}"
+    docker-compose exec litespeed bash -c "appinstallctl.sh --app ${1} --domain ${2} ${3}"
     revert_phpmemory ${1}
     bash bin/webadmin.sh -r
     exit 0
