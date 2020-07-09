@@ -763,6 +763,14 @@ change_owner(){
 	    chown -R ${WWW_UID}:${WWW_GID} ${DEFAULT_VH_ROOT}/${DOMAIN}
 }
 
+store_access(){
+    cat << EOM > ${VH_ROOT}/.app_access
+Account: ${APP_ACCT}
+Password: ${APP_PASS}
+Admin_URL: ${MA_BACK_URL}
+EOM
+}
+
 show_access(){
 	echoG '----------------------------------------'
 	echoY "Account: ${APP_ACCT}"
@@ -798,6 +806,7 @@ main(){
 		install_ma_sample
 		change_owner
 		show_access
+		store_access
 		exit 0	
 	else
 		echo "APP: ${APP} not support, exit!"
