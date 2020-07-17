@@ -109,6 +109,15 @@ After running the following command, you should be able to access the WordPress 
 ```
 bash bin/demosite.sh
 ```
+
+Add `-M` parameter to install Magento 2 CMS
+```
+bash bin/demosite.sh -M
+```
+Add `-M` and `-S` parameters to install Magento 2 CMS with Sample data
+```
+bash bin/demosite.sh -M -S
+```
 ### Creating a Domain and Virtual Host
 ```
 bash bin/domain.sh [-A, --add] example.com
@@ -132,6 +141,13 @@ To preconfigure the `wp-config` file, run the `database.sh` script for your doma
 ```
 ./bin/appinstall.sh [-A, --app] wordpress [-D, --domain] example.com
 ```
+### Installing a Magento 2 Site
+Run the `database.sh` script for your domain, before you use the following command to install Magento 2:
+```
+./bin/appinstall.sh [-A, --app] magento [-D, --domain] example.com [-S, --sample]
+```
+LiteMage plugin will be installed by default. 
+
 ### Installing ACME 
 We need to run the ACME installation command the **first time only**. 
 With email notification:
